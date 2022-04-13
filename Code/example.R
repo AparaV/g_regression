@@ -7,6 +7,7 @@ library(igraph)
 library(RBGL)
 
 source("bucket_decomposition.R")
+source("mle.R")
 
 
 set.seed(3)
@@ -65,4 +66,7 @@ cpdag <- dag2cpdag(dag)
 cpdag_matrix <- as(cpdag, "matrix")
 
 buckets <- ordered_bucket_decomposition(cpdag_matrix)
+
+lambda_mle <- find_lambda_mle(X, cpdag_matrix, buckets)
+
 

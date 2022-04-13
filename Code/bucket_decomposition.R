@@ -30,7 +30,7 @@ ordered_bucket_decomposition <- function(G) {
     # Construct the partial causal ordering decomposition
     buckets <- list()
     n <- length(connected_components)
-    remaining_vertices <- V
+    remaining_vertices <- colnames(G)
     while (n > 0) {
         C <- connected_components[[1]]
         C_prime <- setdiff(remaining_vertices, C)
@@ -65,16 +65,5 @@ ordered_bucket_decomposition <- function(G) {
     
     return(buckets)
 }
-
-V <- colnames(G)
-
-G <- cpdag_matrix
-G_undirected <- (G + t(G)) / 2
-G_undirected[G_undirected <= 0.5] <- 0
-
-
-G_U <- graph.adjacency(G_undirected, mode="undirected")
-G_U <- as_graphnel(G_U)
-connected_components <- connectedComp(G_U)
 
 
