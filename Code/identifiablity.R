@@ -74,6 +74,24 @@ ancestors <- function(X, G) {
     return(an)
 }
 
+descendants <- function(dag, source, visited=c()) {
+    
+    nbrs <- which(dag[source, ] != 0, arr.ind=T)
+    if (length(nbrs) == 0) {
+        return(visited)
+    }
+    
+    for (i in 1:length(nbrs)) {
+        A <- nbrs[i]
+        if (A %in% visited) {
+            next
+        }
+        visited <- find_descendants(dag, A, c(visited, A))
+    }
+    
+    return(visited)
+}
+
 
 possibly_causal_path <- function(G, source, dest, forbidden=c(), undirected=TRUE, seen_nodes=c()) {
     
