@@ -1,0 +1,112 @@
+##
+## Sample DAG and data
+##
+
+require(pcalg)
+# library(igraph)
+require(RBGL)
+
+
+# Function to sample edge weights
+sample_edge_weights <- function(m) {
+    abs_weight <- runif(m, min=0.1, max=2)
+    sign_weight <- -1 + 2*rbinom(m, 1, 0.5)
+    weight <- abs_weight * sign_weight
+    return(weight)
+}
+
+
+# Error distribution 1 in Guo + Perkovic (2022)
+error_dist_1 <- function(n) {
+    v <- runif(n, min=0.5, max=6)
+    epsilon <- rnorm(n, mean=0, sd=v)
+    return(epsilon)
+}
+
+error_dist_2 <- function(n) {
+    v <- runif(n, min=0.5, max=1.5)
+    epsilon <- sqrt(v) * rt(n, 5)
+    return(epsilon)
+}
+
+error_dist_3 <- function(n) {
+    s <- runif(n, min=0.4, max=0.7)
+    epsilon <- rlogis(n, location=0, scale=s)
+    return(epsilon)
+}
+
+error_dist_4 <- function(n) {
+    a <- runif(n, min=1.2, max=2.1)
+    epsilon <- runif(n, min=-a, max=a)
+    return(epsilon)
+}
+
+
+compute_error <- function(est, true) {
+    return(norm(true-est, type="2"))
+}
+
+sample_dag <- function(n, k) {
+    dag <- pcalg::randDAG(n, k, weighted=TRUE, wFUN=list(sample_edge_weights))
+    cpdag <- pcalg::dag2cpdag(dag)
+    
+    # Need to work with the CPDAG for bucket decomposition
+    dag_matrix <- as(dag, "matrix")
+    cpdag_matrix <- as(cpdag, "matrix")
+    
+    # cpdag_matrix <- cpdag_matrix[sorted_dag, sorted_dag]
+    
+    # Get gamma matrix by sorting rows and columns in DAG
+    cols <- colnames(dag_matrix)
+    sorted_names <- as.character(sort(as.integer(cols)))
+    gamma <- dag_matrix[sorted_names, sorted_names]
+    
+    result <- list(
+        dag=dag,
+        cpdag=cpdag,
+        dag_amat=dag_matrix,
+        cpdag_amat=cpdag_matrix
+    )
+    return(result)
+}
+
+sort_dag <- function(dag) {
+    # Topologically sort the DAG so it is easier to generate data
+    sorted_nodes <- rev(RBGL::tsort(dag))
+    dag_mat <- as(dag, "matrix")
+    dag_mat <- dag_mat[sorted_nodes, sorted_nodes]
+    return(dag_mat)
+}
+
+dag_to_SEM <- function(dag_amat) {
+    return(t(dag_amat))
+}
+
+
+# Method to sample data from DAG
+sample_data <- function(n, dag, err) {
+    # n: Number of data points
+    # dag: Topologically sorted dag
+    # err: Function that generates error
+    
+    sorted_dag_amat <- sort_dag(dag)
+    gamma <- dag_to_SEM(sorted_dag_amat)
+    
+    p <- nrow(gamma)
+    X <- matrix(0, nrow=n, ncol=p)
+    X[, p] <- err(n)
+    for (i in (p-1):1) {
+        X[, i] <- gamma[i, ] %*% t(X) + err(n)
+    }
+    
+    # The columns in dag are topologically sorted
+    # So unsort the columns in the data matrix
+    X <- data.frame(X)
+    cols <- colnames(gamma)
+    colnames(X) <- cols
+    sorted_names <- as.character(sort(as.integer(cols)))
+    X <- X[, sorted_names]
+    X <- as(X, "matrix")
+    
+    return(X)
+}
