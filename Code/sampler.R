@@ -70,6 +70,69 @@ sample_dag <- function(n, k) {
     return(result)
 }
 
+sample_treatment_outcome <- function(dag_amat, A_len) {
+    
+    # Find nodes in DAG that have non-empty descendants
+    dag_amat[which(dag_amat != 0)] <- 1
+    A_candidates <- which(rowSums(dag_amat) != 0)
+    
+    # Search through all subsets of size A_len to find a pair (A, Y)
+    # such that the effect of A on Y is identified
+    possible_treatments <- combn(A_candidates, A_len, simplify=FALSE)
+    indices_treatments <- seq(1:length(possible_treatments))
+    
+    found_A <- FALSE
+    while(!found_A) {
+        
+        if (length(indices_treatments) == 0) {
+            break
+        }
+        
+        # We sample a treatment set and make sure we never pick it again
+        idx <- sample(length(indices_treatments), 1)
+        A_idx <- indices_treatments[idx]
+        A <- possible_treatments[[A_idx]]
+        indices_treatments <- indices_treatments[-idx]
+        
+        # Find all possible descendants of treatment set
+        Y_candidates <- c()
+        for (a in A) {
+            a_descendants <- descendants(dag_object$dag_amat, a)
+            Y_candidates <- c(Y_candidates, a_descendants)
+        }
+        Y_candidates <- unique(Y_candidates)
+        if (length(Y_candidates) == 0) {
+            next
+        }
+        
+        # For non-empty descendant sets, find an outcome so that the effect
+        # is identified
+        identified <- FALSE
+        for (i in 1:length(Y_candidates)) {
+            Y <- Y_candidates[i]
+            if (Y %in% A) {
+                next
+            }
+            # cat("A", A, ", Y", Y, "\n")
+            identified <- is_identifiable(dag_object$cpdag_amat, A, Y)
+            if (identified) {
+                found_A <- TRUE
+                break
+            }
+        }
+    }
+    
+    if (found_A) {
+        return(list(A=A, Y=Y))
+    }
+    else {
+        return(NULL)
+    }
+}
+
+
+
+
 sort_dag <- function(dag) {
     # Topologically sort the DAG so it is easier to generate data
     sorted_nodes <- rev(RBGL::tsort(dag))

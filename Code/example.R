@@ -5,7 +5,7 @@
 source("sampler.R")
 source("mle.R")
 
-set.seed(3)
+set.seed(333)
 
 num_nodes <- 10
 poss_degrees <- c(2, 3, 4, 5)

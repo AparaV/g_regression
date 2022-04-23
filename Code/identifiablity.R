@@ -6,6 +6,7 @@ directed_path <- function(G, source, dest, forbidden=c()) {
     # cat("From", source, "to", dest, "\n")
     
     vertex_names <- colnames(G)
+    # cat(vertex_names, "\n")
     source_id <- which(vertex_names == source)[1]
     dest_id <- which(vertex_names == dest)[1]
     
@@ -86,7 +87,7 @@ descendants <- function(dag, source, visited=c()) {
         if (A %in% visited) {
             next
         }
-        visited <- find_descendants(dag, A, c(visited, A))
+        visited <- descendants(dag, A, c(visited, A))
     }
     
     return(visited)
