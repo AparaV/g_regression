@@ -98,5 +98,13 @@ cat("Saving results in", output, "\n")
 
 results_df <- data.frame(results_mat)
 colnames(results_df) <- c("G_err", "eff2_err", "adj_err", "rrc_err", "mcd_err")
-saveRDS(results_df, output)
+results <- list(
+    errors=results_df,
+    num_nodes=num_nodes,
+    A_len=A_len,
+    n=n,
+    num_reps=num_reps
+)
+
+saveRDS(results, output)
 
