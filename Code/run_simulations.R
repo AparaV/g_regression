@@ -31,73 +31,90 @@ num_reps <- args$num_reps
 output <- args$output
 
 
-results_mat <- matrix(NA, nrow=num_reps, ncol=5)
+results_mat <- matrix(NA, nrow=num_reps, ncol=6)
 
-set.seed(0)
+seed_counter <- 0
+set.seed(seed_counter)
 iters <- 0
 while (iters < num_reps) {
     
-    cat("Iteration", iters + 1, ":\n")
+    seed_counter <- seed_counter + 1
+    set.seed(seed_counter)
     
-    # Sample a DAG
-    cat("\tSampling a DAG\n")
-    poss_degrees <- c(2, 3, 4, 5)
-    avg_degree <- sample(poss_degrees, 1)
-    dag_object <- sample_dag(num_nodes, avg_degree)
+    cat("Iteration", iters + 1, "( seed =", seed_counter, "):\n")
     
-    # Sample treatments and outcomes
-    cat("\tSampling treatment and outcome variables\n")
-    AY <- sample_treatment_outcome(dag_object$dag_amat, A_len)
-    if (is.null(AY)) {
-        cat("\t\tNo identified pair found!")
-        cat("\t\tRepeating iteration", iters + 1, "\n")
-        cat("--------------------\n")
-        # There was no identifiable treatment, outcome pair found
-        next
-    }
-    A <- AY$A
-    Y <- AY$Y
-    
-    # Sample data from DAG
-    cat("\tSampling data\n")
-    X <- sample_data(n, dag_object$dag, err=error_dist_1)
-    sigma_n <- sample_covariance(X)
-    
-    # Estimate effects using various methods
-    cat("\tEstimating effects\n")
-    cause_eff <- estimate_causal_effect(X, A, Y, dag_object$cpdag_amat)
-    true_eff <- find_true_causal_effect(dag_object$dag_amat, A, Y, dag_object$cpdag_amat)
-    eff2_eff <- eff2::estimateEffect(X, A, Y, t(dag_object$cpdag_amat))
-    adjustment_eff <- pcalg::ida(A, Y, sigma_n, dag_object$cpdag_amat, method="optimal", type="cpdag")
-    rrc_eff <- pcalg::jointIda(A, Y, sigma_n, dag_object$cpdag_amat, technique="RRC", type="cpdag")
-    mcd_eff <- pcalg::jointIda(A, Y, sigma_n, dag_object$cpdag_amat, technique="MCD", type="cpdag")
-    
-    # Compute and store errors
-    cat("\tComputing L2 errors\n")
-    results_iter <- rep(NA, 5)
-    results_iter[1] <- compute_error(cause_eff, true_eff)
-    results_iter[2] <- compute_error(eff2_eff, true_eff)
-    if (size(adjustment_eff)[2] == 1) {
-        results_iter[3] <- compute_error(adjustment_eff[, 1], true_eff)
-    }
-    if (size(rrc_eff)[2] == 1) {
-        results_iter[4] <- compute_error(rrc_eff[, 1], true_eff)
-    }
-    if (size(rrc_eff)[2] == 1) {
-        results_iter[5] <- compute_error(mcd_eff[, 1], true_eff)
-    }
-    
-    cat("\tFinished iteration", iters + 1, "\n")
-    cat("--------------------\n")
-    iters <- iters + 1
-    results_mat[iters,] <- results_iter
+    out <- tryCatch({
+            # Sample a DAG
+            cat("\tSampling a DAG\n")
+            poss_degrees <- c(2, 3, 4, 5)
+            avg_degree <- sample(poss_degrees, 1)
+            dag_object <- sample_dag(num_nodes, avg_degree)
+            
+            # Sample treatments and outcomes
+            cat("\tSampling treatment and outcome variables\n")
+            AY <- sample_treatment_outcome(dag_object$dag_amat, A_len)
+            if (is.null(AY)) {
+                cat("\t\tNo identified pair found!")
+                cat("\t\tRepeating iteration", iters + 1, "\n")
+                cat("--------------------\n")
+                # There was no identifiable treatment, outcome pair found
+                # return(FALSE)
+                next
+            }
+            A <- AY$A
+            Y <- AY$Y
+            
+            # Sample data from DAG
+            cat("\tSampling data\n")
+            X <- sample_data(n, dag_object$dag, err=error_dist_1)
+            sigma_n <- sample_covariance(X)
+            
+            # Estimate effects using various methods
+            cat("\tEstimating effects\n")
+            cause_eff <- estimate_causal_effect(X, A, Y, dag_object$cpdag_amat)
+            true_eff <- find_true_causal_effect(dag_object$dag_amat, A, Y, dag_object$cpdag_amat)
+            eff2_eff <- eff2::estimateEffect(X, A, Y, t(dag_object$cpdag_amat))
+            adjustment_eff <- pcalg::ida(A, Y, sigma_n, dag_object$cpdag_amat, method="optimal", type="cpdag")
+            rrc_eff <- pcalg::jointIda(A, Y, sigma_n, dag_object$cpdag_amat, technique="RRC", type="cpdag")
+            mcd_eff <- pcalg::jointIda(A, Y, sigma_n, dag_object$cpdag_amat, technique="MCD", type="cpdag")
+            
+            # Compute and store errors
+            cat("\tComputing L2 errors\n")
+            results_iter <- rep(NA, 6)
+            results_iter[1] <- seed_counter
+            results_iter[2] <- compute_error(cause_eff, true_eff)
+            results_iter[3] <- compute_error(eff2_eff, true_eff)
+            if (size(adjustment_eff)[2] == 1) {
+                results_iter[4] <- compute_error(adjustment_eff[, 1], true_eff)
+            }
+            if (size(rrc_eff)[2] == 1) {
+                results_iter[5] <- compute_error(rrc_eff[, 1], true_eff)
+            }
+            if (size(rrc_eff)[2] == 1) {
+                results_iter[6] <- compute_error(mcd_eff[, 1], true_eff)
+            }
+            
+            cat("\tFinished iteration", iters + 1, "\n")
+            cat("--------------------\n")
+            iters <- iters + 1
+            results_mat[iters,] <- results_iter
+            
+            # return(TRUE)
+        },
+        error=function(cond){
+            cat("\tRan into the following error:\n\t")
+            print(cond)
+            cat("Trying next seed")
+            return(FALSE)
+        }
+    )
 }
 
 cat("Finished all simulations.\n")
 cat("Saving results in", output, "\n")
 
 results_df <- data.frame(results_mat)
-colnames(results_df) <- c("G_err", "eff2_err", "adj_err", "rrc_err", "mcd_err")
+colnames(results_df) <- c("Seed", "G_err", "eff2_err", "adj_err", "rrc_err", "mcd_err")
 results <- list(
     errors=results_df,
     num_nodes=num_nodes,
