@@ -163,3 +163,19 @@ is_identifiable <- function(G, A, Y) {
     return(TRUE)
     
 }
+
+
+is_effect_same <- function(effect) {
+    p <- size(effect)[1]
+    n <- size(effect)[2]
+    
+    is_same <- TRUE
+    for (i in 1:p) {
+        if (all.equal(effect[i, ], rep(effect[i, 1], n), tolerance=1e-5) != TRUE) {
+            is_same <- FALSE
+            break
+        }
+    }
+    
+    return(is_same)
+}

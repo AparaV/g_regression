@@ -6,6 +6,7 @@ library(optparse)
 
 source("sampler.R")
 source("mle.R")
+source("identifiablity.R")
 
 option_list = list(
     make_option(c("--num_nodes"), type="integer", default=10, 
@@ -31,6 +32,11 @@ num_reps <- args$num_reps
 output <- args$output
 
 
+# num_nodes <- 50
+# A_len <- 3
+# n <- 1000
+
+
 results_mat <- matrix(NA, nrow=num_reps, ncol=6)
 
 seed_counter <- 0
@@ -39,6 +45,7 @@ iters <- 0
 while (iters < num_reps) {
     
     seed_counter <- seed_counter + 1
+    # seed_counter <- 1
     set.seed(seed_counter)
     
     cat("Iteration", iters + 1, "( seed =", seed_counter, "):\n")
@@ -84,13 +91,13 @@ while (iters < num_reps) {
             results_iter[1] <- seed_counter
             results_iter[2] <- compute_error(cause_eff, true_eff)
             results_iter[3] <- compute_error(eff2_eff, true_eff)
-            if (size(adjustment_eff)[2] == 1) {
+            if (is_effect_same(adjustment_eff)) {
                 results_iter[4] <- compute_error(adjustment_eff[, 1], true_eff)
             }
-            if (size(rrc_eff)[2] == 1) {
+            if (is_effect_same(rrc_eff)) {
                 results_iter[5] <- compute_error(rrc_eff[, 1], true_eff)
             }
-            if (size(rrc_eff)[2] == 1) {
+            if (is_effect_same(mcd_eff)) {
                 results_iter[6] <- compute_error(mcd_eff[, 1], true_eff)
             }
             
@@ -104,7 +111,7 @@ while (iters < num_reps) {
         error=function(cond){
             cat("\tRan into the following error:\n\t")
             print(cond)
-            cat("Trying next seed")
+            cat("\tTrying next seed\n")
             return(FALSE)
         }
     )

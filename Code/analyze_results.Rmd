@@ -1,0 +1,49 @@
+---
+title: "Analyze results"
+author: "Apara Venkat"
+date: "4/25/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+
+path_name <- "../Results/V50_A3_n1000.rds"
+
+results <- readRDS(path_name)
+errors <- results$errors
+
+errors$adj_ratio <- errors$adj_err / errors$G_err
+errors$rrc_ratio <- errors$rrc_err / errors$G_err
+errors$mcd_ratio <- errors$mcd_err / errors$G_err
+
+means <- colMeans(errors, na.rm=T)
+print(means)
+
+adj_missing <- length(which(is.na(errors$adj_err)))
+rrc_missing <- length(which(is.na(errors$rrc_err)))
+mcd_missing <- length(which(is.na(errors$mcd_err)))
+
+print(adj_missing)
+print(rrc_missing)
+print(mcd_missing)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r cars}
+summary(cars)
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
