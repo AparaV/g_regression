@@ -6,16 +6,25 @@ require(pracma)
 source("identifiablity.R")
 source("bucket_decomposition.R")
 
-sample_covariance <- function(X) {
+sample_covariance <- function(X, center=FALSE) {
     n <- nrow(X)
+    if (center) {
+        X <- X - colMeans(X)
+    }
     sigma <- t(X) %*% X / n
     return(sigma)
 }
 
 
-find_lambda_mle <- function(X, cpdag, buckets) {
-    p <- ncol(X)
-    sigma_n <- sample_covariance(X)
+find_lambda_mle <- function(X, cpdag, buckets, cov=NULL) {
+    if (is.null(cov)) {
+        p <- ncol(X)
+        sigma_n <- sample_covariance(X)
+    }
+    else {
+        p <- ncol(cov)
+        sigma_n <- cov
+    }
     K <- length(buckets)
     lambda <- matrix(0, nrow=p, ncol=p)
     
@@ -152,7 +161,7 @@ G_estimator <- function(G, lambda, A, Y) {
     return(tau)
 }
 
-estimate_causal_effect <- function(data, A, Y, mpdag) {
+estimate_causal_effect <- function(data, A, Y, mpdag, cov=NULL) {
     if (length(Y) != 1) {
         stop("The outcome variable Y should be one-dimensional")
     }
@@ -164,7 +173,7 @@ estimate_causal_effect <- function(data, A, Y, mpdag) {
     }
     
     buckets <- ordered_bucket_decomposition(mpdag)
-    lambda_mle <- find_lambda_mle(data, mpdag, buckets)
+    lambda_mle <- find_lambda_mle(data, mpdag, buckets, cov)
     # print(lambda_mle)
     tau_AY <- G_estimator(mpdag, lambda_mle, A, Y)
     
