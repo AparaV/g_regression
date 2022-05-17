@@ -60,9 +60,14 @@ while (iters < num_reps) {
             avg_degree <- sample(poss_degrees, 1)
             dag_object <- sample_dag(num_nodes, avg_degree)
             
+            # Sample data from DAG
+            cat("\tSampling data\n")
+            X <- sample_data(n, dag_object$dag, err=error_dist_1)
+            sigma_n <- sample_covariance(X)
+            
             # Sample treatments and outcomes
             cat("\tSampling treatment and outcome variables\n")
-            AY <- sample_treatment_outcome(dag_object$dag_amat, A_len)
+            AY <- sample_treatment_outcome(dag_object$dag_amat, dag_object$cpdag_amat, A_len)
             if (is.null(AY)) {
                 cat("\t\tNo identified pair found!")
                 cat("\t\tRepeating iteration", iters + 1, "\n")
@@ -73,11 +78,6 @@ while (iters < num_reps) {
             }
             A <- AY$A
             Y <- AY$Y
-            
-            # Sample data from DAG
-            cat("\tSampling data\n")
-            X <- sample_data(n, dag_object$dag, err=error_dist_1)
-            sigma_n <- sample_covariance(X)
             
             # Estimate effects using various methods
             cat("\tEstimating effects\n")

@@ -22,6 +22,10 @@ unweighted_dag <- dag_object$dag_amat
 unweighted_dag[which(unweighted_dag != 0)] <- 1
 A_candidates <- which(rowSums(unweighted_dag) != 0)
 
+score <- new("GaussL0penObsScore", X)
+
+ges_fit <- ges(score)
+
 
 A <- sample(A_candidates, A_len)
 

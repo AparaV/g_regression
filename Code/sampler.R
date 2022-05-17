@@ -2,9 +2,9 @@
 ## Sample DAG and data
 ##
 
-require(pcalg)
-# library(igraph)
-require(RBGL)
+library(pcalg)
+library(igraph)
+library(RBGL)
 
 
 # Function to sample edge weights
@@ -70,9 +70,10 @@ sample_dag <- function(n, k) {
     return(result)
 }
 
-sample_treatment_outcome <- function(dag_amat, A_len) {
+sample_treatment_outcome <- function(dag_amat, cpdag_amat, A_len, cpdag_est=NULL) {
     
     # Find nodes in DAG that have non-empty descendants
+    dag_amat_og <- dag_amat
     dag_amat[which(dag_amat != 0)] <- 1
     A_candidates <- which(rowSums(dag_amat) != 0)
     
@@ -97,7 +98,7 @@ sample_treatment_outcome <- function(dag_amat, A_len) {
         # Find all possible descendants of treatment set
         Y_candidates <- c()
         for (a in A) {
-            a_descendants <- descendants(dag_object$dag_amat, a)
+            a_descendants <- descendants(dag_amat_og, a)
             Y_candidates <- c(Y_candidates, a_descendants)
         }
         Y_candidates <- unique(Y_candidates)
@@ -114,7 +115,10 @@ sample_treatment_outcome <- function(dag_amat, A_len) {
                 next
             }
             # cat("A", A, ", Y", Y, "\n")
-            identified <- is_identifiable(dag_object$cpdag_amat, A, Y)
+            identified <- is_identifiable(cpdag_amat, A, Y)
+            if(!is.null(cpdag_est)) {
+                identified <- identified & is_identifiable(cpdag_est, A, Y)
+            }
             if (identified) {
                 found_A <- TRUE
                 break
