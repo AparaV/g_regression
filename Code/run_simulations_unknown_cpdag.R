@@ -32,12 +32,6 @@ num_reps <- args$num_reps
 output <- args$output
 
 
-num_nodes <- 20
-A_len <- 3
-n <- 100
-num_reps <- 10
-
-
 results_mat <- matrix(NA, nrow=num_reps, ncol=6)
 
 seed_counter <- 0
@@ -51,7 +45,6 @@ while (iters < num_reps) {
     # }
     # seed_counter <- 1
     set.seed(seed_counter)
-    # set.seed(17)
     
     cat("Iteration", iters + 1, "( seed =", seed_counter, "):\n")
     
