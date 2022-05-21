@@ -6,6 +6,8 @@ library(pcalg)
 library(igraph)
 library(RBGL)
 
+source("cpdag.R")
+
 
 # Function to sample edge weights
 sample_edge_weights <- function(m) {
@@ -46,20 +48,26 @@ compute_error <- function(est, true) {
     return(norm(true-est, type="2"))
 }
 
-sample_dag <- function(n, k) {
+sample_dag <- function(n, k, homebrew=TRUE) {
     dag <- pcalg::randDAG(n, k, weighted=TRUE, wFUN=list(sample_edge_weights))
-    cpdag <- pcalg::dag2cpdag(dag)
+    dag_matrix <- as(dag, "matrix")
     
     # Need to work with the CPDAG for bucket decomposition
-    dag_matrix <- as(dag, "matrix")
-    cpdag_matrix <- as(cpdag, "matrix")
+    if (homebrew) {
+        cpdag <- NULL
+        cpdag_matrix <- get_cpdag(dag_matrix, verbose=T)
+    }
+    else {
+        cpdag <- pcalg::dag2cpdag(dag)
+        cpdag_matrix <- as(cpdag, "matrix")
+    }
     
     # cpdag_matrix <- cpdag_matrix[sorted_dag, sorted_dag]
     
     # Get gamma matrix by sorting rows and columns in DAG
-    cols <- colnames(dag_matrix)
-    sorted_names <- as.character(sort(as.integer(cols)))
-    gamma <- dag_matrix[sorted_names, sorted_names]
+    # cols <- colnames(dag_matrix)
+    # sorted_names <- as.character(sort(as.integer(cols)))
+    # gamma <- dag_matrix[sorted_names, sorted_names]
     
     result <- list(
         dag=dag,

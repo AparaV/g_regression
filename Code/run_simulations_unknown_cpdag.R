@@ -40,9 +40,9 @@ iters <- 0
 while (iters < num_reps) {
     
     seed_counter <- seed_counter + 1
-    # if (seed_counter == 443) {
-    #     next
-    # }
+    if (seed_counter == 850) {
+        next
+    }
     # seed_counter <- 1
     set.seed(seed_counter)
     
