@@ -180,6 +180,22 @@ estimate_causal_effect <- function(data, A, Y, mpdag, cov=NULL) {
     return(t(tau_AY))
 }
 
+bootstrap_error <- function(data, A, Y, mpdag, reps=100) {
+    n <- nrow(data)
+    sample_df <- replicate(reps,
+        estimate_causal_effect(data[sample(n, replace=T), ], A, Y, mpdag))
+    sample_df <- matrix(sample_df, ncol=reps)
+    
+    if (length(A) == 1) {
+        std_err <- var(sample_df)
+    }
+    else {
+        std_err <- cov(t(sample_df))
+    }
+    
+    return(std_err)
+}
+
 find_true_causal_effect <- function(gamma, A, Y, mpdag) {
     if (length(Y) != 1) {
         stop("The outcome variable Y should be one-dimensional")
