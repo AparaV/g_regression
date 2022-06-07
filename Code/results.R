@@ -15,8 +15,16 @@ gm_mean = function(x, na.rm=TRUE){
     exp(sum(log(x[x > 0])) / length(x))
 }
 
-generate_plots <- FALSE
-print_tex_stuff <- TRUE
+generate_plots <- TRUE
+print_tex_stuff <- FALSE
+estimated_cpdag <- FALSE
+if (estimated_cpdag) {
+    fname_extension <- "_est_cpdag.rds"
+    subdirectory <- "estimated_cpdag"
+} else {
+    fname_extension <- ".rds"
+    subdirectory <- "true_cpdag"
+}
 
 poss_V <- c(20, 50, 100)
 poss_A <- c(1, 2, 3, 4)
@@ -36,6 +44,15 @@ ggplot_theme <- theme_bw() +
           strip.background = element_rect(colour="black", fill="white"),
           plot.title = element_text(hjust = 0.5))
 
+ggplot_theme_slides <- theme_bw() +
+    theme(panel.border = element_blank(), panel.grid.major.x = element_blank(),
+          panel.grid.minor.x = element_blank(), panel.grid.major.y = element_blank(),
+          panel.grid.minor.y = element_blank(),
+          axis.line = element_line(colour = "black"),
+          strip.background = element_rect(colour="black", fill="white"),
+          plot.title = element_text(hjust = 0.5),
+          text=element_text(size=20))
+
 for (V_i in 1:length(poss_V)) {
     V <- poss_V[V_i]
     for (A_i in 1:length(poss_A)) {
@@ -43,7 +60,7 @@ for (V_i in 1:length(poss_V)) {
         for (n_i in 1:length(poss_n)) {
             n <- poss_n[n_i]
             
-            path_name <- paste0("../Results/V", V, "_A", A, "_n", n, ".rds")
+            path_name <- paste0("../Results/V", V, "_A", A, "_n", n, fname_extension)
             
             # cat("V = ", V, "A = ", A, "n = ", n, "\n")
             
@@ -125,13 +142,34 @@ for (V_i in 1:length(poss_V)) {
                     # These make a "+" sign at the median
                     stat_summary(fun="median", geom="crossbar", width=0.2, size=0.2) +
                     stat_summary(fun="median", geom="crossbar", width=0.02, size=2) +
-                    ggplot_theme +
-                    xlab("Method") + ylab("Relative error") + ggtitle(plot_title) +
+                    ggplot_theme_slides +
+                    xlab("") +
+                    ylab("Relative error") +
+                    # ggtitle(plot_title) +
                     scale_y_log10(breaks=y_breaks, labels=y_labels) +
                     scale_x_discrete(labels=c("Optimal\nAdjustment", "IDA\n(MCD)", "IDA\n(RRC)"))
-    
-                fname <- paste0("../Figures/violin_", V, "_", A, "_", n, ".pdf")
+                
+                fname <- paste0("../Figures/", subdirectory, "/violin_", V, "_", A, "_", n, ".pdf")
                 ggsave(fname, units="in", width=5, height=5, dpi=200)
+                
+                if (V_i == 1 && A_i == 1 && n_i == 2) {
+                    p <- ggplot(this_df, aes(Method, Ratio)) +
+                        geom_violin(trim=T, na.rm=T, scale="width", kernel="triangular", color="white") +
+                        geom_hline(yintercept=1, color="black", size=0.7, linetype="dashed") +
+                        # stat_summary(fun="mean", geom="point") +
+                        # These make a "+" sign at the median
+                        # stat_summary(fun="median", geom="crossbar", width=0.2, size=0.2) +
+                        # stat_summary(fun="median", geom="crossbar", width=0.02, size=2) +
+                        ggplot_theme_slides +
+                        xlab("") +
+                        ylab("Relative error") +
+                        # ggtitle(plot_title) +
+                        scale_y_log10(breaks=y_breaks, labels=y_labels) +
+                        scale_x_discrete(labels=c("Optimal\nAdjustment", "IDA\n(MCD)", "IDA\n(RRC)"))
+                    
+                    fname <- paste0("../Figures/", subdirectory, "/empty_violin_plot.pdf")
+                    ggsave(fname, units="in", width=5, height=5, dpi=200)
+                }
             }
         }
     }
@@ -152,10 +190,12 @@ if (print_tex_stuff) {
     
     print("Missing table")
     for (i in 1:12) {
-        for (j in 2:5) {
+        cat(i %% 4)
+        for (j in 3:5) {
             cat(" & ", round(missing_table_df[i, j]))
+            cat("\\%")
         }
-        cat("\\\\ \n")
+        cat(" \\\\ \n")
     }
 }
 
@@ -180,6 +220,6 @@ if (generate_plots) {
         scale_x_discrete(labels=c("Optimal\nAdjustment", "IDA\n(MCD)", "IDA\n(RRC)")) +
         facet_nested(A ~ V + n, labeller=label_both)
     
-    ggsave("../Figures/violin_ensemble.pdf", units="in", width=12, height=10, dpi=200)
+    ggsave(paste0("../Figures/", subdirectory, "/violin_ensemble.pdf"), units="in", width=12, height=10, dpi=200)
     
 }
