@@ -142,10 +142,10 @@ for (k in 1:length(networks)) {
 N <- nrow(X1) + nrow(X2) + nrow(X3) + nrow(X4) + nrow(X5)
 z <- qnorm(0.975)
 
-G_na_se <- sqrt(apply(G_na_errors, 1, var)) * z / sqrt(N) * 100
-adj_na_se <- sqrt(apply(adj_na_errors, 1, var)) * z / sqrt(N) * 100
-G_se <- sqrt(apply(G_errors, 1, var)) * z / sqrt(N) * 100
-rrc_se <- sqrt(apply(rrc_errors, 1, var)) * z / sqrt(N) * 100
+G_na_se <- sqrt(apply(G_na_errors * 100, 1, var))
+adj_na_se <- sqrt(apply(adj_na_errors * 100, 1, var)) 
+G_se <- sqrt(apply(G_errors * 100, 1, var))
+rrc_se <- sqrt(apply(rrc_errors * 100, 1, var)) 
 
 print(G_na_se)
 print(adj_na_se)
