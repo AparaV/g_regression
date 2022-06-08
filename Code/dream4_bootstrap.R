@@ -8,6 +8,8 @@ library(pcalg)
 source("mle.R")
 source("sampler.R")
 
+set.seed(0)
+
 estimate_s_ij <- function(s, tau, A, Y) {
     s_ij <- s[Y] - (s[A[1]] * tau[1] + s[A[2]] * tau[2])
     return(s_ij)
