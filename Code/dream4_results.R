@@ -69,8 +69,8 @@ networks <- list(network_1, network_2, network_3, network_4)
 A <- list(c(6, 8), c(7, 8), c(8, 10), c(8, 5), c(8, 9))
 Y <- c(1:10)
 
-errors <- data.frame(matrix(nrow=0, ncol=7))
-colnames(errors) <- c("Network", "G", "eff2", "adj", "rrc", "baseline", "denominator")
+errors <- data.frame(matrix(nrow=0, ncol=6))
+colnames(errors) <- c("Network", "G", "adj", "rrc", "baseline", "denominator")
 
 for (k in 1:length(networks)) {
     for (i in 1:length(A)) {
@@ -84,12 +84,10 @@ for (k in 1:length(networks)) {
             }
             else {
                 cause_eff <- estimate_causal_effect(NULL, A[[i]], Y[j], networks[[k]], cov)
-                eff2_eff <- eff2:::.estimateEffect(cov, A[[i]], Y[j], networks[[k]])
                 adjustment_eff <- pcalg::ida(A[[i]], Y[j], cov, networks[[k]], method="optimal", type="pdag")
                 rrc_eff <- pcalg::jointIda(A[[i]], Y[j], cov, networks[[k]], technique="RRC", type="pdag")[, 1]
                 
                 s_ij_est_G <- estimate_s_ij(s, cause_eff, A[[i]], Y[j])#[[1]]
-                s_ij_est_eff2 <- estimate_s_ij(s, eff2_eff, A[[i]], Y[j])#[[1]]
                 s_ij_est_adj <- estimate_s_ij(s, adjustment_eff, A[[i]], Y[j])#[[1]]
                 s_ij_est_rrc <- estimate_s_ij(s, rrc_eff, A[[i]], Y[j])#[[1]]
             }
@@ -98,13 +96,12 @@ for (k in 1:length(networks)) {
             true <- double_knockout[i, j]
             
             errors_k_G <- (s_ij_est_G - true)^2
-            errors_k_eff2 <- (s_ij_est_eff2 - true)^2
             errors_k_adj <- (s_ij_est_adj - true)^2
             errors_k_rrc <- (s_ij_est_rrc - true)^2
             errors_k_baseline <- (baseline_est - true)^2
             normalizing <- true^2
             
-            errors[nrow(errors) + 1, ] <- c(k, errors_k_G, errors_k_eff2, errors_k_adj, errors_k_rrc, errors_k_baseline, normalizing)
+            errors[nrow(errors) + 1, ] <- c(k, errors_k_G, errors_k_adj, errors_k_rrc, errors_k_baseline, normalizing)
             
         }
     }
@@ -118,21 +115,17 @@ for (k in 1:length(networks)) {
     results_k_na <- results_k[-which(is.na(results_k$adj)), ]
     missing <- length(which(is.na(results_k$adj))) / nrow(results_k)
     G_na <- sum(results_k_na$G) / sum(results_k_na$denominator)
-    eff2_na <- sum(results_k_na$eff2) / sum(results_k_na$denominator)
     adj_na <- sum(results_k_na$adj) / sum(results_k_na$denominator)
     
     G <- sum(results_k$G) / sum(results_k$denominator)
-    eff2_tot <- sum(results_k$eff2) / sum(results_k$denominator)
     rrc <- sum(results_k$rrc) / sum(results_k$denominator)
     baseline <- sum(results_k$baseline) / sum(results_k$denominator)
     
     cat("k ==", k, "\n")
     cat("Missing", missing, "\n")
     cat("G", G_na, "\n")
-    # cat("eff2", eff2_na, "\n")
     cat("adj", adj_na, "\n")
     cat("G", G, "\n")
-    # cat("eff2", eff2_tot, "\n")
     cat("rrc", rrc, "\n")
     cat("baseline", baseline, "\n")
     cat("=====\n")

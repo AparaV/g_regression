@@ -32,7 +32,7 @@ num_reps <- args$num_reps
 output <- args$output
 
 
-results_mat <- matrix(NA, nrow=num_reps, ncol=6)
+results_mat <- matrix(NA, nrow=num_reps, ncol=5)
 
 seed_counter <- 0
 set.seed(seed_counter)
@@ -85,25 +85,23 @@ while (iters < num_reps) {
         cat("\tEstimating effects\n")
         cause_eff <- estimate_causal_effect(X, A, Y, cpdag_est)
         true_eff <- find_true_causal_effect(dag_object$dag_amat, A, Y, dag_object$cpdag_amat)
-        eff2_eff <- eff2::estimateEffect(X, A, Y, t(cpdag_est))
         adjustment_eff <- pcalg::ida(A, Y, sigma_n, cpdag_est, method="optimal", type="cpdag")
         rrc_eff <- pcalg::jointIda(A, Y, sigma_n, cpdag_est, technique="RRC", type="cpdag")
         mcd_eff <- pcalg::jointIda(A, Y, sigma_n, cpdag_est, technique="MCD", type="cpdag")
         
         # Compute and store errors
         cat("\tComputing L2 errors\n")
-        results_iter <- rep(NA, 6)
+        results_iter <- rep(NA, 5)
         results_iter[1] <- seed_counter
         results_iter[2] <- compute_error(cause_eff, true_eff)
-        results_iter[3] <- compute_error(eff2_eff, true_eff)
         if (is_effect_same(adjustment_eff)) {
-            results_iter[4] <- compute_error(adjustment_eff[, 1], true_eff)
+            results_iter[3] <- compute_error(adjustment_eff[, 1], true_eff)
         }
         if (is_effect_same(rrc_eff)) {
-            results_iter[5] <- compute_error(rrc_eff[, 1], true_eff)
+            results_iter[4] <- compute_error(rrc_eff[, 1], true_eff)
         }
         if (is_effect_same(mcd_eff)) {
-            results_iter[6] <- compute_error(mcd_eff[, 1], true_eff)
+            results_iter[5] <- compute_error(mcd_eff[, 1], true_eff)
         }
         
         cat("\tFinished iteration", iters + 1, "\n")
@@ -126,7 +124,7 @@ cat("Finished all simulations.\n")
 cat("Saving results in", output, "\n")
 
 results_df <- data.frame(results_mat)
-colnames(results_df) <- c("Seed", "G_err", "eff2_err", "adj_err", "rrc_err", "mcd_err")
+colnames(results_df) <- c("Seed", "G_err", "adj_err", "rrc_err", "mcd_err")
 results <- list(
     errors=results_df,
     num_nodes=num_nodes,
